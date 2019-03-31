@@ -1,0 +1,130 @@
+syntax = "proto3";
+
+//activity_review: 师生展评
+
+package cfwf.micro_service.activity_review;
+option java_package = "com.cfwf.micro_service.activity_review";
+
+service ActivityReview {
+
+    //发送消息通知
+    rpc SendActivityReviewMessage (SendActivityReviewMessageRequest) returns (CommonResponse) {}
+
+    //获取消息通知
+    rpc GetActivityReviewMessage (GetActivityReviewMessageRequest) returns (GetActivityReviewMessageResponse){}
+
+    //阅读消息通知
+    rpc ReadActivityReviewMessage (ReadActivityReviewMessageRequest) returns (CommonResponse){}
+
+    //消息查阅情况
+    rpc CheckActivityReviewMessage (CheckActivityReviewMessageRequest) returns (CheckActivityReviewMessageResponse){}
+}
+
+//通用rpc调用返回结果
+enum RPC_CALL_RESULT {
+    RPC_CALL_RESULT_NONE = 0;          //不应出现
+    RPC_CALL_RESULT_SUCCESS = 1;       //成功
+    RPC_CALL_RESULT_DB_ERROR = 2;      //数据库出错
+    RPC_CALL_RESULT_INPUT_ERROR = 3;   //传入数据有错，格式错误或者找不到对应条目
+    RPC_CALL_RESULT_ERROR = 4;         //其他错误
+}
+
+//消息类型
+enum MESSAGE_TYPE_RESULT {
+    MESSAGE_TYPE_RESULT_ALL = 0;      //全部
+    MESSAGE_TYPE_RESULT_SEND = 1;     //发送者(发出的展评消息)
+    MESSAGE_TYPE_RESULT_RECEIVE = 2;  //接收者(收到的展评消息)
+}
+
+//阅读状态
+enum MESSAGE_TYPE_READ {
+    MESSAGE_TYPE_READ_NO = 0;        //未读
+    MESSAGE_TYPE_READ_YES = 1;       //已读
+}
+
+//一般rpc调用返回值
+message CommonResponse {
+    RPC_CALL_RESULT result = 1;
+    string msg = 2;
+}
+
+message MessageItem{
+    int32 messageId = 1;                 //消息Id
+    int32 messageActivityId = 2;         //活动Id
+    int64 messageSendId = 3;             //发送者Id
+    int64 messageReceiveId = 4;          //接收者Id
+    MESSAGE_TYPE_RESULT messageType = 5; //消息类型
+    string messageTitle = 6;             //消息标题
+    string messageContent = 7;           //消息内容
+    int32 messageTime = 8;               //接收时间
+    MESSAGE_TYPE_READ messageIsRead = 9; //阅读状态
+    int32 messageReadTime = 10;          //阅读时间
+}
+
+message CheckItem{
+    int64 messageReceiveId = 1;          //阅读者Id
+    MESSAGE_TYPE_READ messageIsRead = 2; //阅读状态
+    int32 messageReadTime = 3;           //阅读时间
+}
+
+//发送消息通知-Request
+message SendActivityReviewMessageRequest {
+    //Required
+    int32 messageActivityId = 1;         //活动Id
+    int64 messageSendId = 2;             //发送者Id
+    repeated int64 messageReceiveId = 3; //接收者Id
+    MESSAGE_TYPE_RESULT messageType = 4; //消息类型
+    string messageTitle = 5;             //消息标题
+    string messageContent = 6;           //消息内容
+    int32 messageTime = 7;               //接收/发送时间
+
+    //Optional
+    int32 messageParentId = 8;           //父节点(发送者对应的消息Id)
+}
+
+//获取消息通知-Request
+message GetActivityReviewMessageRequest{
+    //Required
+    int64 messageReceiveId = 1;          //接收者Id
+    MESSAGE_TYPE_RESULT messageType = 2; //消息类型
+
+    //Optional
+    int32 page = 3;                      //当前页(default : 1)
+    int32 pageSize = 4;                  //每页条数(default : 10)
+}
+
+//获取消息通知-Response
+message GetActivityReviewMessageResponse{
+    RPC_CALL_RESULT result = 1;
+    int32 maxCount = 2;                  //总条数
+    int32 noReadCount = 3;               //未读数
+    repeated MessageItem list = 4;       //当前页结果列表
+}
+
+//阅读消息通知-Request
+message ReadActivityReviewMessageRequest{
+    //Required
+    int32 messageId = 1;                 //消息Id
+
+    //Optional
+}
+
+//消息查阅情况-Request
+message CheckActivityReviewMessageRequest{
+    //Required
+    int32 messageParentId = 1;           //父节点(发送者对应的消息Id)
+
+    //Optional
+    int32 page = 2;                      //当前页(default : 1)
+    int32 pageSize = 3;                  //每页条数(default : 10)
+}
+
+//消息查阅情况-Response
+message CheckActivityReviewMessageResponse{
+    RPC_CALL_RESULT result = 1;
+    int32 maxCount = 2;                  //总条数
+    int32 messageTime = 3;               //发送时间
+    repeated int64 messageReceiveId = 4; //接收者Id
+    repeated CheckItem list = 5;         //当前页结果列表
+
+}
